@@ -39,8 +39,8 @@ func Read(args []string) (*Configuration, error) {
 	}, nil
 }
 
-func (configuration *Configuration) Input() string {
-	return configuration.inputs[0]
+func (configuration *Configuration) Inputs() []string {
+	return configuration.inputs
 }
 
 func (configuration *Configuration) Output() string {

@@ -12,8 +12,8 @@ get started with.
 - [X] Ingest atom feed and output atom feed
 - [X] Ingest atom feed from web url
 - [X] Set feed ID, name, and alternate URL from flags
-- [ ] Ingest and merge multiple atom feeds and output atom feed
-- [ ] Sort data by updated/published date
+- [X] Ingest and merge multiple atom feeds and output atom feed
+- [X] Sort data by updated/published date
 - [ ] Sort ascending or descending
 - [ ] Dedupe items with the same ID
 - [ ] Clean data (ex: trim whitespace in elements)
