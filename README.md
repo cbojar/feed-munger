@@ -10,7 +10,7 @@ feature that will be added, but this should provide a starting set of tasks to
 get started with.
 
 - [X] Ingest atom feed and output atom feed
-- [ ] Ingest atom feed from web url
+- [X] Ingest atom feed from web url
 - [ ] Ingest and merge multiple atom feeds and output atom feed
 - [ ] Sort data by updated/published date
 - [ ] Sort ascending or descending

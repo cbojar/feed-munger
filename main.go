@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"io"
+	"net/http"
 	"os"
+	"strings"
 
 	"github.com/beevik/etree"
 	"github.com/cbojar/feed-munger/configuration"
@@ -36,6 +38,13 @@ func main() {
 func readFile(path string) ([]byte, error) {
 	if path == "-" {
 		return io.ReadAll(os.Stdin)
+	} else if strings.HasPrefix(path, "https://") || strings.HasPrefix(path, "http://") {
+		if response, err := http.Get(path); err != nil {
+			return nil, err
+		} else {
+			defer response.Body.Close()
+			return io.ReadAll(response.Body)
+		}
 	} else {
 		return os.ReadFile(path)
 	}
