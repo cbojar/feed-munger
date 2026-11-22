@@ -9,7 +9,7 @@ An off-the-cuff TODO list. Not everything will happen, nor will this be every
 feature that will be added, but this should provide a starting set of tasks to
 get started with.
 
-- [ ] Ingest atom feed and output atom feed
+- [X] Ingest atom feed and output atom feed
 - [ ] Ingest atom feed from web url
 - [ ] Ingest and merge multiple atom feeds and output atom feed
 - [ ] Sort data by updated/published date
