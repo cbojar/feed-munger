@@ -12,23 +12,23 @@ import (
 func main() {
 	config, err := configuration.Read(os.Args[1:])
 	if err != nil {
-		fmt.Printf("Failed to read command: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to read command: %s\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("Output: %s, Inputs: %s\n", config.Output(), config.Input())
+	fmt.Fprintf(os.Stderr, "Output: %s, Inputs: %s\n", config.Output(), config.Input())
 
 	if input, err := readFile(config.Input()); err != nil {
-		fmt.Printf("Error reading file: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Error reading file: %s\n", err)
 		os.Exit(1)
 	} else if document, err := parseFile(input); err != nil {
-		fmt.Printf("Error parsing file: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Error parsing file: %s\n", err)
 		os.Exit(1)
 	} else if output, err := unparseFile(document); err != nil {
-		fmt.Printf("Error serializing file: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Error serializing file: %s\n", err)
 		os.Exit(1)
 	} else if err = writeFile(config.Output(), output); err != nil {
-		fmt.Printf("Error writing file: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Error writing file: %s\n", err)
 		os.Exit(1)
 	}
 }
