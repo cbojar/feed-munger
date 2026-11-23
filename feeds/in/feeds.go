@@ -1,6 +1,10 @@
 package infeeds
 
 import (
+	"slices"
+	"strings"
+
+	"github.com/beevik/etree"
 	"github.com/cbojar/feed-munger/feeds"
 )
 
@@ -28,6 +32,22 @@ func (in *Feeds) Namespaces() feeds.Namespaces {
 	}
 
 	return namespaces
+}
+
+func (in *Feeds) Entries() []*etree.Element {
+	entries := []*etree.Element{}
+	for _, feed := range in.feeds {
+		entries = append(entries, feed.Entries()...)
+	}
+
+	slices.SortFunc(entries, func(entry1 *etree.Element, entry2 *etree.Element) int {
+		date1 := entry1.SelectElement("updated").Text()
+		date2 := entry2.SelectElement("updated").Text()
+
+		return strings.Compare(date2, date1)
+	})
+
+	return entries
 }
 
 func (in *Feeds) append(feed *Feed) {

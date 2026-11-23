@@ -48,5 +48,22 @@ func (feed *Feed) Alternate() (string, bool) {
 }
 
 func (feed *Feed) Entries() []*etree.Element {
-	return feed.document.Root().SelectElements("entry")
+	feedTitle, titleFound := feed.Title()
+
+	entries := feed.document.Root().SelectElements("entry")
+	extracted := make([]*etree.Element, 0, len(entries))
+
+	for _, entry := range entries {
+		extractedEntry := entry.Copy()
+
+		if titleFound {
+			source := extractedEntry.CreateElement("source")
+			sourceTitle := source.CreateElement("title")
+			sourceTitle.SetText(feedTitle)
+		}
+
+		extracted = append(extracted, extractedEntry)
+	}
+
+	return extracted
 }
