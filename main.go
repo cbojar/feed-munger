@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"slices"
 	"strings"
@@ -11,101 +9,50 @@ import (
 
 	"github.com/beevik/etree"
 	c "github.com/cbojar/feed-munger/configuration"
+	in "github.com/cbojar/feed-munger/feeds/in"
+	"github.com/cbojar/feed-munger/inputs"
 )
 
 func main() {
 	config, err := c.Read(os.Args[1:])
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to read command: %s\n", err)
-		os.Exit(1)
-	}
+	check(err, "Failed to read command")
 
 	fmt.Fprintf(os.Stderr, "%s\n", config)
 
-	if inputs, err := readFiles(config.Inputs()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error reading file: %s\n", err)
-		os.Exit(1)
-	} else if documents, err := parseFiles(inputs); err != nil {
-		fmt.Fprintf(os.Stderr, "Error parsing file: %s\n", err)
-		os.Exit(1)
-	} else if document, err := processFiles(config, documents); err != nil {
-		fmt.Fprintf(os.Stderr, "Error processing file: %s\n", err)
-		os.Exit(1)
-	} else if output, err := unparseFile(document); err != nil {
-		fmt.Fprintf(os.Stderr, "Error serializing file: %s\n", err)
-		os.Exit(1)
-	} else if err = writeFile(config.Output(), output); err != nil {
-		fmt.Fprintf(os.Stderr, "Error writing file: %s\n", err)
+	inputs, closer, err := inputs.OpenAll(config.Inputs())
+	check(err, "Error reading files")
+	defer closer()
+
+	documents, err := in.ParseAll(inputs)
+	check(err, "Error parsing files")
+
+	document, err := processFiles(config, documents)
+	check(err, "Error processing files")
+
+	output, err := unparseFile(document)
+	check(err, "Error serializing file")
+
+	err = writeFile(config.Output(), output)
+	check(err, "Error writing file")
+}
+
+func check(err error, message string) {
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s: %s\n", message, err)
 		os.Exit(1)
 	}
 }
 
-func readFiles(paths []string) ([][]byte, error) {
-	files := make([][]byte, 0, len(paths))
-
-	for _, path := range paths {
-		if file, err := readFile(path); err != nil {
-			return nil, err
-		} else {
-			files = append(files, file)
-		}
-	}
-
-	return files, nil
-}
-
-func readFile(path string) ([]byte, error) {
-	if path == "-" {
-		return io.ReadAll(os.Stdin)
-	} else if strings.HasPrefix(path, "https://") || strings.HasPrefix(path, "http://") {
-		if response, err := http.Get(path); err != nil {
-			return nil, err
-		} else {
-			defer response.Body.Close()
-			return io.ReadAll(response.Body)
-		}
-	} else {
-		return os.ReadFile(path)
-	}
-}
-
-func parseFiles(datas [][]byte) ([]*etree.Document, error) {
-	documents := make([]*etree.Document, 0, len(datas))
-
-	for _, data := range datas {
-		if document, err := parseFile(data); err != nil {
-			return nil, err
-		} else {
-			documents = append(documents, document)
-		}
-	}
-
-	return documents, nil
-}
-
-func parseFile(data []byte) (*etree.Document, error) {
-	document := etree.NewDocument()
-	if err := document.ReadFromBytes(data); err != nil {
-		return nil, err
-	} else {
-		return document, nil
-	}
-}
-
-func processFiles(config *c.Configuration, documents []*etree.Document) (*etree.Document, error) {
-	processed := createFeed(config, documents[0])
+func processFiles(config *c.Configuration, documents *in.Feeds) (*etree.Document, error) {
+	processed := createFeed(config, documents.First())
 	root := processed.Root()
 
-	for _, document := range documents {
-		for _, attr := range document.Root().Attr {
-			if strings.HasPrefix(attr.FullKey(), "xmlns") {
-				root.CreateAttr(attr.FullKey(), attr.Value)
-			}
-		}
+	for _, namespace := range documents.Namespaces() {
+		root.CreateAttr(namespace.Key(), namespace.Value())
 	}
 
 	entries := []*etree.Element{}
-	for _, document := range documents {
+	for _, document := range documents.All() {
 		entries = append(entries, extractEntries(document)...)
 	}
 
@@ -123,7 +70,7 @@ func processFiles(config *c.Configuration, documents []*etree.Document) (*etree.
 	return processed, nil
 }
 
-func createFeed(config *c.Configuration, firstDocument *etree.Document) *etree.Document {
+func createFeed(config *c.Configuration, firstDocument *in.Feed) *etree.Document {
 	document := etree.NewDocument()
 	document.CreateProcInst("xml", `version="1.0" encoding="UTF-8"`)
 	root := document.CreateElement("feed")
@@ -132,15 +79,15 @@ func createFeed(config *c.Configuration, firstDocument *etree.Document) *etree.D
 	id := root.CreateElement("id")
 	if config.ID() != "" {
 		id.SetText(config.ID())
-	} else if firstDocumentID := firstDocument.FindElement("/feed/id"); firstDocumentID != nil {
-		id.SetText(firstDocumentID.Text())
+	} else if firstDocumentID, found := firstDocument.ID(); found {
+		id.SetText(firstDocumentID)
 	}
 
 	title := root.CreateElement("title")
 	if config.Name() != "" {
 		title.SetText(config.Name())
-	} else if firstDocumentTitle := firstDocument.FindElement("/feed/title"); firstDocumentTitle != nil {
-		title.SetText(firstDocumentTitle.Text())
+	} else if firstDocumentTitle, found := firstDocument.Title(); found {
+		title.SetText(firstDocumentTitle)
 	}
 
 	alternate := root.CreateElement("link")
@@ -148,8 +95,8 @@ func createFeed(config *c.Configuration, firstDocument *etree.Document) *etree.D
 	alternate.CreateAttr("type", "text/html")
 	if config.Alternate() != "" {
 		alternate.CreateAttr("href", config.Alternate())
-	} else if firstDocumentAlternate := firstDocument.FindElement("/feed/link[@rel='alternate']"); firstDocumentAlternate != nil {
-		alternate.CreateAttr("href", firstDocumentAlternate.SelectAttrValue("href", ""))
+	} else if firstDocumentAlternate, found := firstDocument.Alternate(); found {
+		alternate.CreateAttr("href", firstDocumentAlternate)
 	}
 
 	updated := root.CreateElement("updated")
@@ -158,16 +105,21 @@ func createFeed(config *c.Configuration, firstDocument *etree.Document) *etree.D
 	return document
 }
 
-func extractEntries(document *etree.Document) []*etree.Element {
-	feedTitle := document.Root().SelectElement("title").Text()
-	entries := document.Root().SelectElements("entry")
+func extractEntries(document *in.Feed) []*etree.Element {
+	feedTitle, titleFound := document.Title()
+
+	entries := document.Entries()
 	extracted := make([]*etree.Element, 0, len(entries))
 
 	for _, entry := range entries {
 		extractedEntry := entry.Copy()
-		source := extractedEntry.CreateElement("source")
-		sourceTitle := source.CreateElement("title")
-		sourceTitle.SetText(feedTitle)
+
+		if titleFound {
+			source := extractedEntry.CreateElement("source")
+			sourceTitle := source.CreateElement("title")
+			sourceTitle.SetText(feedTitle)
+		}
+
 		extracted = append(extracted, extractedEntry)
 	}
 
