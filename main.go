@@ -11,25 +11,25 @@ import (
 )
 
 func main() {
-	config, err := c.Read(os.Args[1:])
+	options, err := c.Read(os.Args[1:])
 	check(err, "Failed to read command")
 
-	fmt.Fprintf(os.Stderr, "%s\n", config)
+	fmt.Fprintf(os.Stderr, "%s\n", options)
 
-	inputs, closer, err := inputs.OpenAll(config.Inputs())
+	inputs, closer, err := inputs.OpenAll(options.Inputs())
 	check(err, "Error reading files")
 	defer closer()
 
 	documents, err := in.ParseAll(inputs)
 	check(err, "Error parsing files")
 
-	document, err := processFiles(config, documents)
+	document, err := processFiles(options, documents)
 	check(err, "Error processing files")
 
 	output, err := document.Bytes()
 	check(err, "Error serializing file")
 
-	err = writeFile(config.Output(), output)
+	err = writeFile(options.Output(), output)
 	check(err, "Error writing file")
 }
 
@@ -40,8 +40,8 @@ func check(err error, message string) {
 	}
 }
 
-func processFiles(config *c.Configuration, documents *in.Feeds) (*out.Feed, error) {
-	processed := out.NewFeed(config, documents.First())
+func processFiles(options *c.Options, documents *in.Feeds) (*out.Feed, error) {
+	processed := out.NewFeed(options, documents.First())
 	processed.AddAllNamespaces(documents.Namespaces())
 	processed.AddAllEntries(documents.Entries())
 

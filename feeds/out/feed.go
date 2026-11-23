@@ -13,22 +13,22 @@ type Feed struct {
 	document *etree.Document
 }
 
-func NewFeed(config *c.Configuration, firstDocument *in.Feed) *Feed {
+func NewFeed(options *c.Options, firstDocument *in.Feed) *Feed {
 	document := etree.NewDocument()
 	document.CreateProcInst("xml", `version="1.0" encoding="UTF-8"`)
 	root := document.CreateElement("feed")
 	root.CreateAttr("xmlns", "http://www.w3.org/2005/Atom")
 
 	id := root.CreateElement("id")
-	if config.ID() != "" {
-		id.SetText(config.ID())
+	if options.ID() != "" {
+		id.SetText(options.ID())
 	} else if firstDocumentID, found := firstDocument.ID(); found {
 		id.SetText(firstDocumentID)
 	}
 
 	title := root.CreateElement("title")
-	if config.Name() != "" {
-		title.SetText(config.Name())
+	if options.Name() != "" {
+		title.SetText(options.Name())
 	} else if firstDocumentTitle, found := firstDocument.Title(); found {
 		title.SetText(firstDocumentTitle)
 	}
@@ -36,10 +36,17 @@ func NewFeed(config *c.Configuration, firstDocument *in.Feed) *Feed {
 	alternate := root.CreateElement("link")
 	alternate.CreateAttr("rel", "alternate")
 	alternate.CreateAttr("type", "text/html")
-	if config.Alternate() != "" {
-		alternate.CreateAttr("href", config.Alternate())
+	if options.Alternate() != "" {
+		alternate.CreateAttr("href", options.Alternate())
 	} else if firstDocumentAlternate, found := firstDocument.Alternate(); found {
 		alternate.CreateAttr("href", firstDocumentAlternate)
+	}
+
+	if options.Self() != "" {
+		self := root.CreateElement("link")
+		self.CreateAttr("rel", "self")
+		self.CreateAttr("type", "application/atom+xml")
+		self.CreateAttr("href", options.Self())
 	}
 
 	updated := root.CreateElement("updated")
