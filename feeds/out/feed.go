@@ -6,7 +6,7 @@ import (
 	"github.com/beevik/etree"
 	c "github.com/cbojar/feed-munger/configuration"
 	"github.com/cbojar/feed-munger/feeds"
-	in "github.com/cbojar/feed-munger/feeds/in"
+	"github.com/cbojar/feed-munger/feeds/in"
 )
 
 type Feed struct {

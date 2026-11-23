@@ -5,7 +5,7 @@ import (
 	"os"
 
 	c "github.com/cbojar/feed-munger/configuration"
-	in "github.com/cbojar/feed-munger/feeds/in"
+	"github.com/cbojar/feed-munger/feeds/in"
 	"github.com/cbojar/feed-munger/feeds/out"
 	"github.com/cbojar/feed-munger/inputs"
 )

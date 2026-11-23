@@ -1,4 +1,4 @@
-package infeeds
+package in
 
 import (
 	"io"
