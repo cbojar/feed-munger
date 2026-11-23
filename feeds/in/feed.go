@@ -11,6 +11,15 @@ type Feed struct {
 	document *etree.Document
 }
 
+func (feed *Feed) Identity() *feeds.Identity {
+	id, _ := feed.id()
+	title, _ := feed.title()
+	alternate, _ := feed.alternate()
+	self, _ := feed.self()
+
+	return feeds.NewIdentity(id, title, alternate, self)
+}
+
 func (feed *Feed) Namespaces() feeds.Namespaces {
 	namespaces := feeds.Namespaces{}
 
@@ -23,7 +32,7 @@ func (feed *Feed) Namespaces() feeds.Namespaces {
 	return namespaces
 }
 
-func (feed *Feed) ID() (string, bool) {
+func (feed *Feed) id() (string, bool) {
 	if id := feed.document.FindElement("/feed/id"); id == nil {
 		return "", false
 	} else {
@@ -31,7 +40,7 @@ func (feed *Feed) ID() (string, bool) {
 	}
 }
 
-func (feed *Feed) Title() (string, bool) {
+func (feed *Feed) title() (string, bool) {
 	if title := feed.document.FindElement("/feed/title"); title == nil {
 		return "", false
 	} else {
@@ -39,7 +48,7 @@ func (feed *Feed) Title() (string, bool) {
 	}
 }
 
-func (feed *Feed) Alternate() (string, bool) {
+func (feed *Feed) alternate() (string, bool) {
 	if link := feed.document.FindElement("/feed/link[@rel='alternate']"); link == nil {
 		return "", false
 	} else {
@@ -47,8 +56,16 @@ func (feed *Feed) Alternate() (string, bool) {
 	}
 }
 
+func (feed *Feed) self() (string, bool) {
+	if link := feed.document.FindElement("/feed/link[@rel='self']"); link == nil {
+		return "", false
+	} else {
+		return link.SelectAttrValue("href", ""), true
+	}
+}
+
 func (feed *Feed) Entries() []*etree.Element {
-	feedTitle, titleFound := feed.Title()
+	feedTitle, titleFound := feed.title()
 
 	entries := feed.document.Root().SelectElements("entry")
 	extracted := make([]*etree.Element, 0, len(entries))

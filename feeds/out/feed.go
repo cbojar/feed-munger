@@ -4,49 +4,41 @@ import (
 	"time"
 
 	"github.com/beevik/etree"
-	c "github.com/cbojar/feed-munger/configuration"
 	"github.com/cbojar/feed-munger/feeds"
-	"github.com/cbojar/feed-munger/feeds/in"
 )
 
 type Feed struct {
 	document *etree.Document
 }
 
-func NewFeed(options *c.Options, firstDocument *in.Feed) *Feed {
+func NewFeed(identity *feeds.Identity) *Feed {
 	document := etree.NewDocument()
 	document.CreateProcInst("xml", `version="1.0" encoding="UTF-8"`)
 	root := document.CreateElement("feed")
 	root.CreateAttr("xmlns", "http://www.w3.org/2005/Atom")
 
-	id := root.CreateElement("id")
-	if options.ID() != "" {
-		id.SetText(options.ID())
-	} else if firstDocumentID, found := firstDocument.ID(); found {
-		id.SetText(firstDocumentID)
+	if identity.ID() != "" {
+		id := root.CreateElement("id")
+		id.SetText(identity.ID())
 	}
 
-	title := root.CreateElement("title")
-	if options.Name() != "" {
-		title.SetText(options.Name())
-	} else if firstDocumentTitle, found := firstDocument.Title(); found {
-		title.SetText(firstDocumentTitle)
+	if identity.Title() != "" {
+		title := root.CreateElement("title")
+		title.SetText(identity.Title())
 	}
 
-	alternate := root.CreateElement("link")
-	alternate.CreateAttr("rel", "alternate")
-	alternate.CreateAttr("type", "text/html")
-	if options.Alternate() != "" {
-		alternate.CreateAttr("href", options.Alternate())
-	} else if firstDocumentAlternate, found := firstDocument.Alternate(); found {
-		alternate.CreateAttr("href", firstDocumentAlternate)
+	if identity.Alternate() != "" {
+		alternate := root.CreateElement("link")
+		alternate.CreateAttr("rel", "alternate")
+		alternate.CreateAttr("type", "text/html")
+		alternate.CreateAttr("href", identity.Alternate())
 	}
 
-	if options.Self() != "" {
+	if identity.Self() != "" {
 		self := root.CreateElement("link")
 		self.CreateAttr("rel", "self")
 		self.CreateAttr("type", "application/atom+xml")
-		self.CreateAttr("href", options.Self())
+		self.CreateAttr("href", identity.Self())
 	}
 
 	updated := root.CreateElement("updated")

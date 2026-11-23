@@ -5,6 +5,7 @@ import (
 	"os"
 
 	c "github.com/cbojar/feed-munger/configuration"
+	"github.com/cbojar/feed-munger/feeds"
 	"github.com/cbojar/feed-munger/feeds/in"
 	"github.com/cbojar/feed-munger/feeds/out"
 	"github.com/cbojar/feed-munger/inputs"
@@ -41,7 +42,8 @@ func check(err error, message string) {
 }
 
 func processFiles(options *c.Options, documents *in.Feeds) (*out.Feed, error) {
-	processed := out.NewFeed(options, documents.First())
+	identity := feeds.IdentityFrom(options).FillInWith(documents.First().Identity())
+	processed := out.NewFeed(identity)
 	processed.AddAllNamespaces(documents.Namespaces())
 	processed.AddAllEntries(documents.Entries())
 
