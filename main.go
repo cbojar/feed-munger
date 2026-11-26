@@ -42,8 +42,8 @@ func check(err error, message string) {
 }
 
 func processFiles(options *c.Options, documents *in.Feeds) (*out.Feed, error) {
-	identity := feeds.IdentityFrom(options).FillInWith(documents.First().Identity())
-	processed := out.NewFeed(identity)
+	masthead := feeds.MastheadFrom(options).FillInWith(documents.Masthead())
+	processed := out.NewFeed(masthead)
 	processed.AddAllNamespaces(documents.Namespaces())
 	processed.AddAllEntries(documents.Entries())
 

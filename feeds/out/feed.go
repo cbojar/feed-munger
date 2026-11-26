@@ -11,38 +11,35 @@ type Feed struct {
 	document *etree.Document
 }
 
-func NewFeed(identity *feeds.Identity) *Feed {
+func NewFeed(masthead *feeds.Masthead) *Feed {
 	document := etree.NewDocument()
 	document.CreateProcInst("xml", `version="1.0" encoding="UTF-8"`)
 	root := document.CreateElement("feed")
 	root.CreateAttr("xmlns", "http://www.w3.org/2005/Atom")
 
-	if identity.ID() != "" {
-		id := root.CreateElement("id")
-		id.SetText(identity.ID())
+	if masthead.ID != "" {
+		root.CreateElement("id").SetText(masthead.ID)
 	}
 
-	if identity.Title() != "" {
-		title := root.CreateElement("title")
-		title.SetText(identity.Title())
+	if masthead.Title != "" {
+		root.CreateElement("title").SetText(masthead.Title)
 	}
 
-	if identity.Alternate() != "" {
+	if masthead.Alternate != "" {
 		alternate := root.CreateElement("link")
 		alternate.CreateAttr("rel", "alternate")
 		alternate.CreateAttr("type", "text/html")
-		alternate.CreateAttr("href", identity.Alternate())
+		alternate.CreateAttr("href", masthead.Alternate)
 	}
 
-	if identity.Self() != "" {
+	if masthead.Self != "" {
 		self := root.CreateElement("link")
 		self.CreateAttr("rel", "self")
 		self.CreateAttr("type", "application/atom+xml")
-		self.CreateAttr("href", identity.Self())
+		self.CreateAttr("href", masthead.Self)
 	}
 
-	updated := root.CreateElement("updated")
-	updated.SetText(time.Now().Format(time.RFC3339))
+	root.CreateElement("updated").SetText(time.Now().Format(time.RFC3339))
 
 	return &Feed{document: document}
 }
@@ -65,105 +62,105 @@ func (feed *Feed) AddAllEntries(entries []*feeds.Entry) {
 
 func (feed *Feed) AddEntry(entry *feeds.Entry) {
 	entryXML := feed.document.Root().CreateElement("entry")
-	entryXML.CreateElement("id").SetText(entry.ID())
-	entryXML.CreateElement("title").SetText(entry.Title())
-	entryXML.CreateElement("updated").SetText(entry.Updated().Format(time.RFC3339))
+	entryXML.CreateElement("id").SetText(entry.ID)
+	entryXML.CreateElement("title").SetText(entry.Title)
+	entryXML.CreateElement("updated").SetText(entry.Updated.Format(time.RFC3339))
 
-	if entry.Published() != nil {
-		entryXML.CreateElement("published").SetText(entry.Published().Format(time.RFC3339))
+	if entry.Published != nil {
+		entryXML.CreateElement("published").SetText(entry.Published.Format(time.RFC3339))
 	}
 
-	for _, link := range entry.Links() {
+	for _, link := range entry.Links {
 		linkXML := entryXML.CreateElement("link")
 
-		if link.Relationship() != "" {
-			linkXML.CreateAttr("rel", link.Relationship())
+		if link.Relationship != "" {
+			linkXML.CreateAttr("rel", link.Relationship)
 		} else {
 			linkXML.CreateAttr("rel", "alternate")
 		}
 
-		if link.ContentType() != "" {
-			linkXML.CreateAttr("type", link.ContentType())
+		if link.ContentType != "" {
+			linkXML.CreateAttr("type", link.ContentType)
 		}
 
-		if link.HrefLang() != "" {
-			linkXML.CreateAttr("hreflang", link.HrefLang())
+		if link.HrefLang != "" {
+			linkXML.CreateAttr("hreflang", link.HrefLang)
 		}
 
-		if link.Href() != nil {
-			linkXML.CreateAttr("href", link.Href().String())
+		if link.Href != "" {
+			linkXML.CreateAttr("href", link.Href)
 		}
 	}
 
-	for _, author := range entry.Authors() {
+	for _, author := range entry.Authors {
 		authorXML := entryXML.CreateElement("author")
-		if author.Name() != "" {
-			authorXML.CreateElement("name").SetText(author.Name())
+		if author.Name != "" {
+			authorXML.CreateElement("name").SetText(author.Name)
 		}
 
-		if author.URI() != nil {
-			authorXML.CreateElement("uri").SetText(author.URI().String())
+		if author.URI != "" {
+			authorXML.CreateElement("uri").SetText(author.URI)
 		}
 
-		if author.Email() != "" {
-			authorXML.CreateElement("email").SetText(author.Email())
+		if author.Email != "" {
+			authorXML.CreateElement("email").SetText(author.Email)
 		}
 
-		for _, element := range author.AdditionalElements() {
+		for _, element := range author.Extensions {
 			authorXML.AddChild(element)
 		}
 	}
 
-	for _, contributor := range entry.Contributors() {
+	for _, contributor := range entry.Contributors {
 		contributorXML := entryXML.CreateElement("contributor")
-		if contributor.Name() != "" {
-			contributorXML.CreateElement("name").SetText(contributor.Name())
+		if contributor.Name != "" {
+			contributorXML.CreateElement("name").SetText(contributor.Name)
 		}
 
-		if contributor.URI() != nil {
-			contributorXML.CreateElement("uri").SetText(contributor.URI().String())
+		if contributor.URI != "" {
+			contributorXML.CreateElement("uri").SetText(contributor.URI)
 		}
 
-		if contributor.Email() != "" {
-			contributorXML.CreateElement("email").SetText(contributor.Email())
+		if contributor.Email != "" {
+			contributorXML.CreateElement("email").SetText(contributor.Email)
 		}
 
-		for _, element := range contributor.AdditionalElements() {
+		for _, element := range contributor.Extensions {
 			contributorXML.AddChild(element)
 		}
 	}
 
-	if entry.Summary() != "" {
-		entryXML.CreateElement("summary").SetText(entry.Summary())
+	if entry.Summary != "" {
+		entryXML.CreateElement("summary").SetText(entry.Summary)
 	}
 
-	if entry.Content() != "" {
-		entryXML.CreateElement("content").SetText(entry.Content())
+	if entry.Content != "" {
+		entryXML.CreateElement("content").SetText(entry.Content)
 	}
 
-	if entry.Rights() != "" {
-		entryXML.CreateElement("rights").SetText(entry.Rights())
+	if entry.Rights != "" {
+		entryXML.CreateElement("rights").SetText(entry.Rights)
 	}
 
-	if entry.Source() != "" {
-		entryXML.CreateElement("source").CreateElement("name").SetText(entry.Source())
+	if entry.Source != "" {
+		entryXML.CreateElement("source").CreateElement("name").SetText(entry.Source)
 	}
 
-	for _, category := range entry.Categories() {
+	for _, category := range entry.Categories {
 		categoryXML := entryXML.CreateElement("category")
 
-		categoryXML.CreateAttr("term", category.Term())
+		categoryXML.CreateAttr("term", category.Term)
 
-		if category.Scheme() != "" {
-			categoryXML.CreateAttr("scheme", category.Scheme())
+		if category.Scheme != "" {
+			categoryXML.CreateAttr("scheme", category.Scheme)
 		}
 
-		if category.Label() != "" {
-			categoryXML.CreateAttr("label", category.Label())
+		if category.Label != "" {
+			categoryXML.CreateAttr("label", category.Label)
 		}
 	}
 
-	for _, element := range entry.AdditionalElements() {
+	for _, element := range entry.Extensions {
 		entryXML.AddChild(element)
 	}
 }

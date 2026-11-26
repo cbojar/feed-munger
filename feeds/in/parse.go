@@ -25,6 +25,6 @@ func parse(data io.ReadCloser) (*Feed, error) {
 	if _, err := document.ReadFrom(data); err != nil {
 		return nil, err
 	} else {
-		return &Feed{document: document}, nil
+		return NewFeed(&AtomFormat{document: document}), nil
 	}
 }

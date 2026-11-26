@@ -1,13 +1,35 @@
 package feeds
 
-import "github.com/cbojar/feed-munger/feeds/entries"
+import (
+	"time"
 
-type Entry = entries.Entry
-type EntryBuilder = entries.EntryBuilder
-type Category = entries.Category
-type Link = entries.Link
-type Person = entries.Person
+	"github.com/beevik/etree"
+)
 
-func BuildEntry(build func(*EntryBuilder)) *Entry {
-	return entries.BuildEntry(build)
+type Entry struct {
+	ID           string
+	Title        string
+	Updated      *time.Time
+	Published    *time.Time
+	Links        []*Link
+	Summary      string
+	Content      string
+	Rights       string
+	Authors      []*Person
+	Contributors []*Person
+	Source       string
+	Categories   []*Category
+	Extensions   []*etree.Element
+}
+
+func (entry *Entry) CompareUpdated(other *Entry) int {
+	if entry.Updated != nil && other.Updated != nil {
+		return entry.Updated.Compare(*other.Updated)
+	} else if entry.Updated == nil && other.Updated != nil {
+		return -1
+	} else if entry.Updated != nil && other.Updated == nil {
+		return 1
+	} else {
+		return 0
+	}
 }
