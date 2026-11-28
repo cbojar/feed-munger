@@ -51,7 +51,7 @@ func (format *AtomFormat) Authors() []*feeds.Person {
 			Name:       authorXML.SelectElement("name").NotNil().Text(),
 			URI:        authorXML.SelectElement("uri").NotNil().Text(),
 			Email:      authorXML.SelectElement("email").NotNil().Text(),
-			Extensions: extensionsUnder(authorXML),
+			Extensions: extensionsToAtomUnder(authorXML),
 		}
 
 		authors = append(authors, author)
@@ -68,7 +68,7 @@ func (format *AtomFormat) Contributors() []*feeds.Person {
 			Name:       contributorXML.SelectElement("name").NotNil().Text(),
 			URI:        contributorXML.SelectElement("uri").NotNil().Text(),
 			Email:      contributorXML.SelectElement("email").NotNil().Text(),
-			Extensions: extensionsUnder(contributorXML),
+			Extensions: extensionsToAtomUnder(contributorXML),
 		}
 
 		contributors = append(contributors, contributor)
@@ -113,7 +113,7 @@ func (format *AtomFormat) Links() []*feeds.Link {
 	links := []*feeds.Link{}
 
 	for linkXML := range format.document.Root().SelectElementsSeq("link") {
-		if rel := linkXML.SelectAttrValue("rel", ""); rel == "" || rel == "alternative" || rel == "self" {
+		if rel := linkXML.SelectAttrValue("rel", ""); rel == "" || rel == "alternate" || rel == "self" {
 			continue
 		}
 
@@ -131,23 +131,11 @@ func (format *AtomFormat) Links() []*feeds.Link {
 }
 
 func (format *AtomFormat) Published() *time.Time {
-	if publishedText := format.document.Root().SelectElement("published").NotNil().Text(); publishedText == "" {
-		return nil
-	} else if published, err := time.Parse(time.RFC3339, publishedText); err != nil {
-		return nil
-	} else {
-		return &published
-	}
+	return elementTimeAtom(format.document.Root(), "published")
 }
 
 func (format *AtomFormat) Updated() *time.Time {
-	if updatedText := format.document.Root().SelectElement("updated").NotNil().Text(); updatedText == "" {
-		return nil
-	} else if updated, err := time.Parse(time.RFC3339, updatedText); err != nil {
-		return nil
-	} else {
-		return &updated
-	}
+	return elementTimeAtom(format.document.Root(), "updated")
 }
 
 func (format *AtomFormat) Entries() []*feeds.Entry {
@@ -156,13 +144,13 @@ func (format *AtomFormat) Entries() []*feeds.Entry {
 	entries := []*feeds.Entry{}
 
 	for entryXML := range entriesXML {
-		entries = append(entries, entry(entryXML, feedTitle))
+		entries = append(entries, entryAtom(entryXML, feedTitle))
 	}
 
 	return entries
 }
 
-func entry(entryXML *etree.Element, feedTitle string) *feeds.Entry {
+func entryAtom(entryXML *etree.Element, feedTitle string) *feeds.Entry {
 	links := []*feeds.Link{}
 	for linkXML := range entryXML.SelectElementsSeq("link") {
 		link := &feeds.Link{
@@ -181,7 +169,7 @@ func entry(entryXML *etree.Element, feedTitle string) *feeds.Entry {
 			Name:       elementText(authorXML, "name"),
 			URI:        elementText(authorXML, "uri"),
 			Email:      elementText(authorXML, "email"),
-			Extensions: extensionsUnder(authorXML),
+			Extensions: extensionsToAtomUnder(authorXML),
 		}
 
 		authors = append(authors, author)
@@ -193,7 +181,7 @@ func entry(entryXML *etree.Element, feedTitle string) *feeds.Entry {
 			Name:       elementText(contributorXML, "name"),
 			URI:        elementText(contributorXML, "uri"),
 			Email:      elementText(contributorXML, "email"),
-			Extensions: extensionsUnder(contributorXML),
+			Extensions: extensionsToAtomUnder(contributorXML),
 		}
 
 		contributors = append(contributors, contributor)
@@ -211,15 +199,15 @@ func entry(entryXML *etree.Element, feedTitle string) *feeds.Entry {
 	}
 
 	extensions := []*etree.Element{}
-	for _, element := range extensionsUnder(entryXML) {
+	for _, element := range extensionsToAtomUnder(entryXML) {
 		extensions = append(extensions, element)
 	}
 
 	entry := &feeds.Entry{
 		ID:           elementText(entryXML, "id"),
 		Title:        elementText(entryXML, "title"),
-		Updated:      elementTime(entryXML, "updated"),
-		Published:    elementTime(entryXML, "published"),
+		Updated:      elementTimeAtom(entryXML, "updated"),
+		Published:    elementTimeAtom(entryXML, "published"),
 		Summary:      elementText(entryXML, "summary"),
 		Content:      elementText(entryXML, "content"),
 		Rights:       elementText(entryXML, "rights"),
@@ -234,11 +222,7 @@ func entry(entryXML *etree.Element, feedTitle string) *feeds.Entry {
 	return entry
 }
 
-func elementText(xml *etree.Element, tag string) string {
-	return xml.SelectElement(tag).NotNil().Text()
-}
-
-func elementTime(xml *etree.Element, tag string) *time.Time {
+func elementTimeAtom(xml *etree.Element, tag string) *time.Time {
 	if text := elementText(xml, tag); text == "" {
 		return nil
 	} else if parsed, err := time.Parse(time.RFC3339, text); err != nil {
@@ -248,7 +232,7 @@ func elementTime(xml *etree.Element, tag string) *time.Time {
 	}
 }
 
-func extensionsUnder(xml *etree.Element) []*etree.Element {
+func extensionsToAtomUnder(xml *etree.Element) []*etree.Element {
 	elements := []*etree.Element{}
 
 	for element := range xml.ChildElementsSeq() {

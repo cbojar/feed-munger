@@ -77,7 +77,7 @@ func (in *Feeds) Entries() []*feeds.Entry {
 	}
 
 	slices.SortFunc(entries, func(entry1 *feeds.Entry, entry2 *feeds.Entry) int {
-		return entry2.CompareUpdated(entry1)
+		return entry2.CompareDate(entry1)
 	})
 
 	return entries

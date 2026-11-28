@@ -22,14 +22,16 @@ type Entry struct {
 	Extensions   []*etree.Element
 }
 
-func (entry *Entry) CompareUpdated(other *Entry) int {
-	if entry.Updated != nil && other.Updated != nil {
-		return entry.Updated.Compare(*other.Updated)
-	} else if entry.Updated == nil && other.Updated != nil {
-		return -1
-	} else if entry.Updated != nil && other.Updated == nil {
-		return 1
+func (entry *Entry) Timestamp() *time.Time {
+	if entry.Updated != nil {
+		return entry.Updated
+	} else if entry.Published != nil {
+		return entry.Published
 	} else {
-		return 0
+		return &time.Time{}
 	}
+}
+
+func (entry *Entry) CompareDate(other *Entry) int {
+	return entry.Timestamp().Compare(*other.Timestamp())
 }

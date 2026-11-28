@@ -3,6 +3,7 @@ package in
 import (
 	"time"
 
+	"github.com/beevik/etree"
 	"github.com/cbojar/feed-munger/feeds"
 )
 
@@ -23,4 +24,8 @@ type FeedFormat interface {
 	Published() *time.Time
 	Updated() *time.Time
 	Entries() []*feeds.Entry
+}
+
+func elementText(xml *etree.Element, tag string) string {
+	return xml.SelectElement(tag).NotNil().Text()
 }

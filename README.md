@@ -18,9 +18,9 @@ get started with.
 - [ ] Dedupe items with the same ID
 - [ ] Clean data (ex: trim whitespace in elements)
 - [ ] Limit number of items in output feed
-- [ ] Ingest rss feed and output atom feed
-- [ ] Ingest and merge multiple rss feeds and output atom feed
-- [ ] Ingest and merge multiple rss and atom feeds and output atom feed
+- [X] Ingest rss feed and output atom feed
+- [X] Ingest and merge multiple rss feeds and output atom feed
+- [X] Ingest and merge multiple rss and atom feeds and output atom feed
 - [ ] Output rss feed (make format selectable)
 - [ ] Apply transformation to fields
 - [ ] Sort by arbitrary field
